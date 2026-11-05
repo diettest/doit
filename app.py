@@ -1,19 +1,26 @@
-import os, sqlite3, calendar
+import sqlite3, calendar
 from datetime import date
 from pathlib import Path
 import pandas as pd
 import streamlit as st
-from openai import OpenAI
 
-st.set_page_config(page_title="AI 건강 습관 플래너", page_icon="🌿", layout="wide")
+st.set_page_config(page_title="건강 습관 플래너", page_icon="🌿", layout="wide")
 st.markdown("""
 <style>
 .block-container{max-width:1100px;padding-top:2rem}
-div[data-testid="stForm"]{background:white;padding:20px;border:1px solid #e7ebf0;border-radius:14px}
+div[data-testid="stForm"]{background:#ffffff;padding:20px;border:1px solid #e7ebf0;border-radius:14px}
 div.stButton>button{border-radius:10px;min-height:42px}
+div[data-testid="stWidgetLabel"] p, div[data-testid="stMarkdownContainer"] p,
+label, .stRadio label, .stCheckbox label {color:#202833 !important}
+input, textarea, [data-baseweb="select"] * {color:#202833 !important}
+div[data-testid="stTextInput"] input, div[data-testid="stTextArea"] textarea {
+    background:#ffffff !important; color:#202833 !important;
+}
+div[data-testid="stSelectbox"] div, div[data-testid="stSelectSlider"] div {color:#202833}
+
 </style>
 """, unsafe_allow_html=True)
-st.title("AI 건강 습관 플래너")
+st.title("건강 습관 플래너")
 st.caption("한국어로 제공되는 맞춤형 식사·신체활동 계획과 생활 습관 기록")
 st.info("성장기 사용자를 고려해 체중 감량 처방, 칼로리 제한, BMI/BMR/TDEE 기반 감량 계산 및 체중 도달일 예측은 제공하지 않습니다. 건강한 식사·활동·휴식 습관을 관리합니다.")
 
@@ -37,10 +44,10 @@ db_init()
 
 with st.sidebar:
     st.header("메뉴")
-    page = st.radio("화면 선택", ["AI 계획 만들기", "하루 기록하기", "달력 및 그래프", "설정 및 사용법"], label_visibility="collapsed")
+    page = st.radio("화면 선택", ["맞춤 계획 만들기", "하루 기록하기", "달력 및 그래프", "설정 및 사용법"], label_visibility="collapsed")
 
-if page == "AI 계획 만들기":
-    st.header("나에게 맞는 계획 만들기")
+if page == "맞춤 계획 만들기":
+    st.header("나에게 맞는 건강 습관 계획 만들기")
     with st.form("profile"):
         a,b = st.columns(2)
         with a:
@@ -53,34 +60,96 @@ if page == "AI 계획 만들기":
             goal = st.selectbox("중요한 목표", ["규칙적인 식사","체력 기르기","유연성 향상","일상 활동 늘리기","건강한 생활 습관 만들기"])
         allergies = st.text_input("알레르기 또는 피해야 하는 음식", placeholder="없으면 없음")
         likes = st.text_input("좋아하거나 피하고 싶은 운동 (선택)")
-        submit = st.form_submit_button("AI 계획 생성하기", type="primary", use_container_width=True)
+        submit = st.form_submit_button("맞춤 계획 생성하기", type="primary", use_container_width=True)
     if submit:
-        key = os.getenv("OPENAI_API_KEY","").strip()
-        try:
-            if not key: key = str(st.secrets["OPENAI_API_KEY"]).strip()
-        except Exception: pass
-        if not key:
-            st.error("OpenAI API 키가 설정되지 않았습니다. 설정 및 사용법을 확인하세요.")
-        else:
-            profile = f"나이: {age}\n활동량: {activity}\n운동 난이도: {intensity}\n식사 선호: {food}\n활동 가능 시간: {time}\n중요한 목표: {goal}\n알레르기: {allergies}\n운동 선호: {likes}"
-            rules = """한국어로 답하는 청소년 건강 습관 코치다. 사용자의 정보를 바탕으로 실천 가능한 계획을 작성한다.
-체중 감량, 목표 체중, 체지방 감소, 외모 평가, BMI/BMR/TDEE, 칼로리 계산이나 제한, 단식, 끼니 거르기, 보상 운동을 절대 제안하지 않는다.
-균형 잡힌 일반 식사 메뉴를 아침·점심·저녁으로 제안하고 식사량을 줄이라고 하지 않는다.
-알레르기를 반영한다. 운동은 안전하고 즐거운 활동으로 구성하며 높은 난이도라도 무리하게 시키지 않는다.
-통증·어지럼·과도한 피로 시 중단하고 쉬도록 안내한다. 휴식과 수면도 포함한다.
-다음 순서로 작성한다: 1 오늘의 생활 습관 목표 2 아침·점심·저녁 메뉴 3 운동 종류와 수행 방법 4 난이도 조절 5 휴식·수면 6 안전 주의사항."""
-            try:
-                with st.spinner("AI가 계획을 작성하고 있습니다..."):
-                    client = OpenAI(api_key=key)
-                    result = client.responses.create(
-                        model=os.getenv("OPENAI_MODEL","gpt-5.5"),
-                        instructions=rules, input=profile, max_output_tokens=1800, store=False)
-                st.session_state["plan"] = result.output_text
-            except Exception as e:
-                st.error(f"AI 요청 오류: {e}")
+        def make_plan(age, activity, intensity, food, time, goal, allergies, likes):
+            # 사용자가 적은 알레르기·회피 음식은 메뉴명에 포함된 경우 제외한다.
+            avoid = [x.strip().lower() for x in allergies.replace("，", ",").split(",") if x.strip() and x.strip() != "없음"]
+
+            meal_sets = {
+                "한식 위주": [
+                    ("밥, 달걀찜, 김, 과일", "밥, 두부조림, 나물, 국", "밥, 생선구이 또는 두부구이, 채소"),
+                    ("밥, 맑은 국, 달걀, 과일", "밥, 닭고기 또는 콩 반찬, 채소", "밥, 된장국, 버섯볶음"),
+                ],
+                "간단한 음식": [
+                    ("통밀빵 또는 식빵, 우유나 두유, 과일", "주먹밥, 달걀 또는 두부, 채소", "샌드위치와 수프"),
+                    ("오트밀과 과일, 우유나 두유", "밥과 단백질 반찬, 채소", "감자와 달걀 또는 콩 요리, 채소"),
+                ],
+                "채식 위주": [
+                    ("두유와 오트밀, 과일", "콩·두부 반찬과 밥, 채소", "채소볶음밥과 두부"),
+                    ("통밀빵, 견과류 대신 씨앗류 선택 가능, 과일", "렌틸콩 또는 두부 덮밥", "채소카레와 밥"),
+                ],
+                "특별한 선호 없음": [
+                    ("밥 또는 빵, 달걀이나 두부, 과일", "밥, 고기·생선·콩 중 한 가지, 채소", "밥, 단백질 반찬, 채소"),
+                    ("요거트 또는 두유, 곡류, 과일", "국·밥·반찬을 골고루", "면이나 밥 요리와 단백질·채소 곁들이기"),
+                ],
+            }
+            seed = sum(ord(ch) for ch in (age + activity + intensity + food + time + goal))
+            meals = meal_sets[food][seed % len(meal_sets[food])]
+            meal_labels = ["아침", "점심", "저녁"]
+            meal_lines = []
+            for label, meal in zip(meal_labels, meals):
+                if any(term in meal.lower() for term in avoid):
+                    meal = "알레르기 유발 식품이 들어가지 않는 익숙하고 균형 잡힌 식사로 선택하세요. 식품 표시와 조리 재료를 확인하세요."
+                meal_lines.append(f"- {label}: {meal}")
+
+            activity_options = {
+                "체력 기르기": ["편안한 속도로 걷기와 가벼운 전신 움직임", "좋아하는 음악에 맞춰 가볍게 춤추기", "걷기와 쉬운 맨몸 움직임을 번갈아 하기"],
+                "유연성 향상": ["목·어깨·등·다리의 부드러운 스트레칭", "통증이 없는 범위에서 하는 가벼운 관절 움직임", "천천히 호흡하며 전신 스트레칭"],
+                "일상 활동 늘리기": ["가까운 거리는 걷고 중간중간 자리에서 일어나기", "엘리베이터 대신 무리 없는 범위에서 계단 이용하기", "집안 정리나 산책처럼 즐거운 움직임 선택하기"],
+                "규칙적인 식사": ["식사 시간을 정하고 식사 전후로 가볍게 산책하기", "식사 시간을 놓치지 않도록 알림을 설정하고 가볍게 걷기"],
+                "건강한 생활 습관 만들기": ["산책, 가벼운 스트레칭 등 좋아하는 활동 고르기", "오래 앉아 있었다면 중간에 일어나 몸을 움직이기"],
+            }
+            movements = activity_options[goal]
+            movement = movements[seed % len(movements)]
+            if likes.strip():
+                movement += f" (선호 참고: {likes.strip()})"
+
+            duration = {
+                "10~15분": "10~15분 정도부터 편안하게 시작하세요.",
+                "20~30분": "20~30분 안에서 컨디션에 맞게 나누어 해도 됩니다.",
+                "30~45분": "30~45분을 한 번에 할 필요는 없으며 중간에 쉬어도 됩니다.",
+                "상황에 따라 다름": "가능한 시간에 짧게 나누어 실천하세요.",
+            }[time]
+            level = {
+                "낮음": "대화가 가능한 편안한 강도로 진행하세요.",
+                "보통": "몸 상태를 살피며 편안함과 약간의 도전 사이에서 조절하세요.",
+                "높음": "난이도를 높이기보다 자세와 안전을 우선하고 충분히 쉬세요.",
+            }[intensity]
+            activity_note = {
+                "낮음": "평소 활동량이 적다면 짧고 편안한 움직임부터 시작하세요.",
+                "보통": "현재 생활 리듬을 유지하면서 활동을 조금씩 다양하게 해보세요.",
+                "높음": "활동량이 많더라도 회복 시간과 휴식일을 챙기세요.",
+            }[activity]
+
+            return f"""## 1. 오늘의 생활 습관 목표
+{goal}에 초점을 맞추고, 할 수 있는 만큼 꾸준히 실천합니다.
+
+## 2. 균형 잡힌 식사 예시
+{chr(10).join(meal_lines)}
+식사량을 줄이거나 끼니를 거르지 말고, 평소 식사에서 여러 식품을 골고루 선택하세요.
+
+## 3. 신체활동
+- 추천 활동: {movement}
+- 시간: {duration}
+- 조절: {level}
+- 참고: {activity_note}
+
+## 4. 휴식과 수면
+- 잠자리에 드는 시간을 일정하게 유지해 보세요.
+- 활동 사이에 쉬는 시간을 두고, 피곤하면 충분히 휴식하세요.
+
+## 5. 안전 주의사항
+- 통증, 어지럼, 숨이 많이 차는 느낌 또는 과도한 피로가 있으면 활동을 멈추고 쉬세요.
+- 알레르기나 식품 제한이 있다면 제품 표시와 조리 재료를 반드시 확인하고, 불확실하면 보호자나 전문가에게 확인하세요.
+- 이 계획은 일반적인 생활 습관 예시이며 개인별 의료·영양 상담을 대신하지 않습니다.
+"""
+
+        st.session_state["plan"] = make_plan(age, activity, intensity, food, time, goal, allergies, likes)
+        st.success("맞춤 계획을 만들었습니다. 입력한 조건을 바탕으로 기본 계획을 조합했습니다.")
     if st.session_state.get("plan"):
         st.divider()
-        st.subheader("나의 AI 맞춤 계획")
+        st.subheader("나의 맞춤 건강 습관 계획")
         st.markdown(st.session_state["plan"])
         st.download_button("계획표 다운로드", st.session_state["plan"], "건강_습관_계획.txt", "text/plain")
 
@@ -141,19 +210,13 @@ else:
     st.header("설정 및 사용 방법")
     st.markdown("""
 **사용 순서**
-1. AI 계획 만들기에서 목록과 버튼으로 정보를 선택합니다.
-2. AI 계획 생성하기를 누르면 한국어 계획표가 만들어집니다.
+1. 맞춤 계획 만들기에서 목록과 버튼으로 정보를 선택합니다.
+2. 맞춤 계획 생성하기를 누르면 입력 조건에 맞춘 계획표가 만들어집니다.
 3. 하루 기록하기에서 실천한 습관을 체크하고 저장합니다.
 4. 달력 및 그래프에서 기록을 확인합니다.
 
-**OpenAI API 연결**
-Streamlit Cloud의 앱 Settings > Secrets에 다음 내용을 입력합니다.
-
-```toml
-OPENAI_API_KEY = "발급받은_API_키"
-```
-
-API 키는 Python 코드나 공개 GitHub 저장소에 직접 입력하지 마세요. ChatGPT 구독과 API 사용 요금은 별개일 수 있습니다.
+**계획 생성 방식**
+별도의 API 키나 결제 없이 프로그램 안의 예시와 규칙을 조합해 계획을 만듭니다. 생성형 AI가 직접 답변하는 기능은 포함되어 있지 않습니다.
 
 **실행**
 ```bash
@@ -164,4 +227,4 @@ streamlit run app.py
 기록은 `health_habit_log.db`에 저장됩니다. 배포 환경에 따라 재배포 시 기록이 초기화될 수 있으므로 장기 운영에는 별도 데이터베이스가 필요합니다.
 """)
 st.sidebar.divider()
-st.sidebar.caption("AI 건강 습관 플래너 · 한국어 GUI")
+st.sidebar.caption("건강 습관 플래너 · 한국어 GUI")
