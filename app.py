@@ -10,53 +10,13 @@ st.markdown("""
 .block-container{max-width:1100px;padding-top:2rem}
 div[data-testid="stForm"]{background:#ffffff;padding:20px;border:1px solid #e7ebf0;border-radius:14px}
 div.stButton>button{border-radius:10px;min-height:42px}
-/* 위젯 제목(나이, 식사 선호, 중요한 목표 등)을 항상 진한 글씨로 표시 */
-div[data-testid="stWidgetLabel"],
-div[data-testid="stWidgetLabel"] *,
-div[data-testid="stSelectbox"] label,
-div[data-testid="stSelectSlider"] label,
-div[data-testid="stRadio"] label,
-div[data-testid="stCheckbox"] label,
-label, label * {
-    color:#202833 !important;
-    opacity:1 !important;
+div[data-testid="stWidgetLabel"] p, div[data-testid="stMarkdownContainer"] p,
+label, .stRadio label, .stCheckbox label {color:#202833 !important}
+input, textarea, [data-baseweb="select"] * {color:#202833 !important}
+div[data-testid="stTextInput"] input, div[data-testid="stTextArea"] textarea {
+    background:#ffffff !important; color:#202833 !important;
 }
-/* 선택 상자 안의 현재 선택값과 입력 글씨 */
-[data-baseweb="select"],
-[data-baseweb="select"] *,
-input, textarea {
-    color:#202833 !important;
-    opacity:1 !important;
-}
-/* 사이드바 메뉴, 안내문, 캡션, 연도·월 라벨 등 일반 텍스트 */
-[data-testid="stSidebar"],
-[data-testid="stSidebar"] *,
-[data-testid="stAlert"],
-[data-testid="stAlert"] *,
-[data-testid="stCaptionContainer"],
-[data-testid="stCaptionContainer"] *,
-[data-testid="stMarkdownContainer"],
-[data-testid="stMarkdownContainer"] *,
-[data-testid="stNumberInput"] label,
-[data-testid="stNumberInput"] label *,
-[data-testid="stSelectbox"] label,
-[data-testid="stSelectbox"] label *,
-[data-testid="stInfo"] p {
-    color:#202833 !important;
-    opacity:1 !important;
-}
-/* 안내 상자의 배경도 밝게 고정 */
-[data-testid="stAlert"] {
-    background-color:#eef5ff !important;
-}
-div[data-testid="stTextInput"] input,
-div[data-testid="stTextArea"] textarea {
-    background:#ffffff !important;
-    color:#202833 !important;
-}
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
-    background:#ffffff !important;
-}
+div[data-testid="stSelectbox"] div, div[data-testid="stSelectSlider"] div {color:#202833}
 
 </style>
 """, unsafe_allow_html=True)
