@@ -7,57 +7,83 @@ import streamlit as st
 st.set_page_config(page_title="건강 습관 플래너", page_icon="🌿", layout="wide")
 st.markdown("""
 <style>
-.block-container{max-width:1100px;padding-top:2rem}
-div[data-testid="stForm"]{background:#ffffff;padding:20px;border:1px solid #e7ebf0;border-radius:14px}
-div.stButton>button{border-radius:10px;min-height:42px}
-/* 위젯 제목(나이, 식사 선호, 중요한 목표 등)을 항상 진한 글씨로 표시 */
-div[data-testid="stWidgetLabel"],
-div[data-testid="stWidgetLabel"] *,
-div[data-testid="stSelectbox"] label,
-div[data-testid="stSelectSlider"] label,
-div[data-testid="stRadio"] label,
-div[data-testid="stCheckbox"] label,
-label, label * {
-    color:#202833 !important;
-    opacity:1 !important;
+:root { color-scheme: dark; }
+html, body, .stApp, [data-testid="stAppViewContainer"],
+[data-testid="stMain"], [data-testid="stMainBlockContainer"] {
+    background: #101722 !important;
+    color: #ffffff !important;
 }
-/* 선택 상자 안의 현재 선택값과 입력 글씨 */
-[data-baseweb="select"],
-[data-baseweb="select"] *,
-input, textarea {
-    color:#202833 !important;
-    opacity:1 !important;
-}
-/* 사이드바 메뉴, 안내문, 캡션, 연도·월 라벨 등 일반 텍스트 */
-[data-testid="stSidebar"],
+/* 모든 일반 텍스트를 흰색으로 강제 */
+.stApp p, .stApp span, .stApp label, .stApp li,
+.stApp h1, .stApp h2, .stApp h3, .stApp h4,
+.stApp [data-testid="stMarkdownContainer"],
+.stApp [data-testid="stCaptionContainer"],
+.stApp [data-testid="stWidgetLabel"],
+.stApp [data-testid="stHeader"],
+.stApp [data-testid="stMetricLabel"],
+.stApp [data-testid="stMetricValue"],
+.stApp [data-testid="stAlert"] *,
 [data-testid="stSidebar"] *,
-[data-testid="stAlert"],
-[data-testid="stAlert"] *,
-[data-testid="stCaptionContainer"],
-[data-testid="stCaptionContainer"] *,
-[data-testid="stMarkdownContainer"],
-[data-testid="stMarkdownContainer"] *,
-[data-testid="stNumberInput"] label,
-[data-testid="stNumberInput"] label *,
-[data-testid="stSelectbox"] label,
-[data-testid="stSelectbox"] label *,
-[data-testid="stInfo"] p {
-    color:#202833 !important;
-    opacity:1 !important;
+[data-testid="stRadio"] *,
+[data-testid="stSelectbox"] *,
+[data-testid="stSelectSlider"] *,
+[data-testid="stNumberInput"] *,
+[data-testid="stDateInput"] *,
+[data-testid="stDataFrame"] * {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    opacity: 1 !important;
 }
-/* 안내 상자의 배경도 밝게 고정 */
+.block-container { max-width: 1100px; padding-top: 2rem; }
+[data-testid="stSidebar"], [data-testid="stSidebar"] > div {
+    background: #172131 !important;
+}
+div[data-testid="stForm"], [data-testid="stVerticalBlockBorderWrapper"] {
+    background: #1b2636 !important;
+    border: 1px solid #46556b !important;
+    border-radius: 14px !important;
+}
+/* 선택 상자와 입력칸은 어두운 바탕 */
+[data-baseweb="select"] > div,
+[data-baseweb="select"] input,
+[data-baseweb="input"] > div,
+[data-baseweb="textarea"] > div,
+.stApp input, .stApp textarea {
+    background: #111a27 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    border-color: #718096 !important;
+    opacity: 1 !important;
+}
+[data-baseweb="select"] *, [data-baseweb="popover"] *,
+[data-baseweb="menu"] *, [role="listbox"] *, [role="option"] * {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    background-color: #1b2636 !important;
+}
+.stApp input::placeholder, .stApp textarea::placeholder {
+    color: #d1d5db !important;
+    -webkit-text-fill-color: #d1d5db !important;
+    opacity: 1 !important;
+}
 [data-testid="stAlert"] {
-    background-color:#eef5ff !important;
+    background: #1b304b !important;
+    border: 1px solid #4b83bd !important;
 }
-div[data-testid="stTextInput"] input,
-div[data-testid="stTextArea"] textarea {
-    background:#ffffff !important;
-    color:#202833 !important;
+[data-testid="stDataFrame"], [data-testid="stTable"] {
+    background: #1b2636 !important;
 }
-div[data-testid="stSelectbox"] [data-baseweb="select"] > div {
-    background:#ffffff !important;
+div.stButton > button, div[data-testid="stFormSubmitButton"] button {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: 1px solid #60a5fa !important;
+    border-radius: 10px !important;
+    min-height: 42px;
 }
-
+div.stButton > button *, div[data-testid="stFormSubmitButton"] button * {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
 </style>
 """, unsafe_allow_html=True)
 st.title("건강 습관 플래너")
