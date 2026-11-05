@@ -7,83 +7,71 @@ import streamlit as st
 st.set_page_config(page_title="건강 습관 플래너", page_icon="🌿", layout="wide")
 st.markdown("""
 <style>
-:root { color-scheme: dark; }
-html, body, .stApp, [data-testid="stAppViewContainer"],
-[data-testid="stMain"], [data-testid="stMainBlockContainer"] {
-    background: #101722 !important;
+/* 전체 화면: 어두운 배경 + 흰색 글씨 */
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+    background-color: #101722 !important;
     color: #ffffff !important;
 }
-/* 모든 일반 텍스트를 흰색으로 강제 */
-.stApp p, .stApp span, .stApp label, .stApp li,
-.stApp h1, .stApp h2, .stApp h3, .stApp h4,
-.stApp [data-testid="stMarkdownContainer"],
-.stApp [data-testid="stCaptionContainer"],
-.stApp [data-testid="stWidgetLabel"],
-.stApp [data-testid="stHeader"],
-.stApp [data-testid="stMetricLabel"],
-.stApp [data-testid="stMetricValue"],
-.stApp [data-testid="stAlert"] *,
-[data-testid="stSidebar"] *,
-[data-testid="stRadio"] *,
-[data-testid="stSelectbox"] *,
-[data-testid="stSelectSlider"] *,
-[data-testid="stNumberInput"] *,
-[data-testid="stDateInput"] *,
-[data-testid="stDataFrame"] * {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    opacity: 1 !important;
-}
-.block-container { max-width: 1100px; padding-top: 2rem; }
+.block-container {max-width:1100px; padding-top:2rem;}
+.stApp, .stApp * {color:#ffffff;}
+/* 사이드바 */
 [data-testid="stSidebar"], [data-testid="stSidebar"] > div {
-    background: #172131 !important;
+    background-color:#172131 !important;
 }
+[data-testid="stSidebar"] * {color:#ffffff !important; opacity:1 !important;}
+/* 입력 폼과 카드 */
 div[data-testid="stForm"], [data-testid="stVerticalBlockBorderWrapper"] {
-    background: #1b2636 !important;
-    border: 1px solid #46556b !important;
-    border-radius: 14px !important;
+    background-color:#1b2636 !important;
+    border:1px solid #344258 !important;
+    border-radius:14px;
 }
-/* 선택 상자와 입력칸은 어두운 바탕 */
+/* 라벨, 메뉴, 설명, 캡션 */
+label, label *, [data-testid="stWidgetLabel"],
+[data-testid="stWidgetLabel"] *,
+[data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] *,
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] *,
+[data-testid="stNumberInput"] *, [data-testid="stSelectbox"] *,
+[data-testid="stSelectSlider"] *, [data-testid="stRadio"] *,
+[data-testid="stCheckbox"] *, [data-testid="stAlert"] * {
+    color:#ffffff !important;
+    opacity:1 !important;
+}
+/* 선택 상자, 입력창 */
 [data-baseweb="select"] > div,
 [data-baseweb="select"] input,
-[data-baseweb="input"] > div,
-[data-baseweb="textarea"] > div,
-.stApp input, .stApp textarea {
-    background: #111a27 !important;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    border-color: #718096 !important;
-    opacity: 1 !important;
+input, textarea,
+[data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea {
+    background-color:#111a27 !important;
+    color:#ffffff !important;
+    -webkit-text-fill-color:#ffffff !important;
+    border-color:#536176 !important;
+    opacity:1 !important;
 }
-[data-baseweb="select"] *, [data-baseweb="popover"] *,
-[data-baseweb="menu"] *, [role="listbox"] *, [role="option"] * {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
-    background-color: #1b2636 !important;
+[data-baseweb="popover"], [data-baseweb="menu"],
+[role="listbox"], [role="option"] {
+    background-color:#1b2636 !important;
+    color:#ffffff !important;
 }
-.stApp input::placeholder, .stApp textarea::placeholder {
-    color: #d1d5db !important;
-    -webkit-text-fill-color: #d1d5db !important;
-    opacity: 1 !important;
-}
+[role="option"] * {color:#ffffff !important;}
+/* 안내 상자 */
 [data-testid="stAlert"] {
-    background: #1b304b !important;
-    border: 1px solid #4b83bd !important;
+    background-color:#1b304b !important;
+    border:1px solid #376ba5 !important;
 }
-[data-testid="stDataFrame"], [data-testid="stTable"] {
-    background: #1b2636 !important;
-}
+/* 버튼 */
 div.stButton > button, div[data-testid="stFormSubmitButton"] button {
-    background: #2563eb !important;
-    color: #ffffff !important;
-    border: 1px solid #60a5fa !important;
-    border-radius: 10px !important;
-    min-height: 42px;
+    border-radius:10px;
+    min-height:42px;
+    background-color:#2563eb !important;
+    color:#ffffff !important;
+    border:1px solid #3b82f6 !important;
 }
 div.stButton > button *, div[data-testid="stFormSubmitButton"] button * {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+    color:#ffffff !important;
 }
+/* 비활성·힌트 글씨도 읽을 수 있게 */
+::placeholder {color:#cbd5e1 !important; opacity:1 !important;}
 </style>
 """, unsafe_allow_html=True)
 st.title("건강 습관 플래너")
@@ -158,21 +146,47 @@ if page == "맞춤 계획 만들기":
                 if any(term in meal.lower() for term in avoid):
                     meal = "알레르기 유발 식품이 들어가지 않는 익숙하고 균형 잡힌 식사로 선택하세요. 식품 표시와 조리 재료를 확인하세요."
                 meal_lines.append(f"- {label}: {meal}")
-                if label == "저녁":
-                    meal_lines.append("  - 식사 안내: 식사량을 줄이거나 끼니를 거르지 말고, 평소 식사에서 여러 식품을 골고루 선택하세요.")
 
             activity_options = {
-                "체력 기르기": ["편안한 속도로 걷기", "좋아하는 음악에 맞춰 춤추기", "가벼운 맨몸 체조", "공놀이 또는 배드민턴처럼 즐거운 놀이 활동", "실내 자전거 타기"],
-                "유연성 향상": ["목·어깨·등·다리의 부드러운 스트레칭", "통증이 없는 범위에서 하는 가벼운 관절 움직임", "천천히 호흡하며 전신 스트레칭", "초보자용 요가 동작 따라 하기"],
-                "일상 활동 늘리기": ["가까운 거리는 걷기", "집안 정리나 가벼운 청소하기", "좋아하는 음악에 맞춰 움직이기", "쉬는 시간마다 자리에서 일어나 몸 풀기", "가족이나 친구와 가벼운 공놀이 하기"],
-                "규칙적인 식사": ["식사 시간을 정하고 알림 설정하기", "식사 전후로 가볍게 걷기", "식사 준비를 돕거나 식탁 정리하기", "식사 사이에 가볍게 스트레칭하기"],
-                "건강한 생활 습관 만들기": ["산책하기", "가벼운 스트레칭이나 요가하기", "좋아하는 음악에 맞춰 춤추기", "실내에서 가볍게 체조하기", "친구나 가족과 즐거운 놀이 활동하기"],
+                "체력 기르기": [
+                    "편안한 속도로 걷기",
+                    "좋아하는 음악에 맞춰 가볍게 춤추기",
+                    "무리하지 않는 쉬운 맨몸 움직임",
+                    "배드민턴이나 공놀이처럼 즐기는 구기 활동",
+                    "편안한 강도의 실내 자전거 타기",
+                ],
+                "유연성 향상": [
+                    "목·어깨·등·다리의 부드러운 스트레칭",
+                    "통증이 없는 범위에서 가볍게 관절 움직이기",
+                    "천천히 호흡하며 전신 스트레칭하기",
+                    "초보자용 가벼운 요가 동작 따라 하기",
+                ],
+                "일상 활동 늘리기": [
+                    "가까운 거리를 짧게 산책하기",
+                    "가벼운 집안일을 하며 몸 움직이기",
+                    "좋아하는 음악에 맞춰 몸 움직이기",
+                    "오래 앉아 있었다면 중간에 일어나 스트레칭하기",
+                    "가족이나 친구와 가볍게 공놀이하기",
+                ],
+                "규칙적인 식사": [
+                    "식사 시간을 정하고 알림 설정하기",
+                    "식사 전후에 컨디션에 맞춰 가볍게 걷기",
+                    "식사 준비나 식탁 정리를 도우며 움직이기",
+                    "식사 사이에 가볍게 일어나 스트레칭하기",
+                ],
+                "건강한 생활 습관 만들기": [
+                    "편안한 속도로 걷기",
+                    "가벼운 스트레칭이나 초보자용 요가 하기",
+                    "좋아하는 음악에 맞춰 춤추기",
+                    "무리하지 않는 쉬운 맨몸 움직임 하기",
+                    "친구나 가족과 가볍게 공놀이하기",
+                ],
             }
             movements = activity_options[goal]
-            first = seed % len(movements)
-            selected_movements = [movements[first], movements[(first + 1) % len(movements)]]
+            first_index = seed % len(movements)
+            selected_movements = [movements[first_index], movements[(first_index + 1) % len(movements)]]
             if likes.strip():
-                selected_movements.append(f"선호하는 활동: {likes.strip()}")
+                selected_movements.append(f"선호하는 활동 참고: {likes.strip()}")
             movement_text = "\n".join(f"- {item}" for item in selected_movements)
 
             duration = {
@@ -193,7 +207,7 @@ if page == "맞춤 계획 만들기":
             }[activity]
 
             return f"""## 1. 오늘의 생활 습관 목표
-{goal}에 초점을 맞추고, 할 수 있는 만큼 꾸준히 실천합니다.
+{goal}에 초점을 맞추고, 할 수 있는 만큼 꾸준히 실천합니다. (식사량을 줄이거나 끼니를 거르지 말고, 평소 식사에서 여러 식품을 골고루 선택하세요.)
 
 ## 2. 균형 잡힌 식사 예시
 {chr(10).join(meal_lines)}
